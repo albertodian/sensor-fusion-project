@@ -4,7 +4,7 @@
 This class has helper methods for I2C SMBus access on a Raspberry PI.
 """
 
-from smbus import SMBus
+from smbus2 import SMBus
 
 
 class I2C(object):

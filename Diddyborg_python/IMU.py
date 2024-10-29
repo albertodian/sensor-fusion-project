@@ -1,6 +1,6 @@
-from altimu10v5.lsm6ds33 import LSM6DS33
-from altimu10v5.lis3mdl import LIS3MDL
-from altimu10v5.lps25h import LPS25H
+from lsm6ds33 import LSM6DS33
+from lis3mdl import LIS3MDL
+from lps25h import LPS25H
 import datetime
 import numpy as np
 import time
