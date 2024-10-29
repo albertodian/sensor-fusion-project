@@ -1,0 +1,4 @@
+- The wall/frame dimension is 121.5 (cm) x 121.5 (cm).
+- The qr code dimension is 11.5 (cm) x 11.5 (cm).
+- There are 36 unique qr codes.
+- The global position of each qr code with respect to the frame is given in qr_code_position_in_global_coordinate.csv.
