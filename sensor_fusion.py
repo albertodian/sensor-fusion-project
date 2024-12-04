@@ -65,7 +65,7 @@ class Sensor:
             end_index = raw_meas_record.shape[0]
         #assuming that time_stamp is the first column
         raw_time = raw_meas_record[start_index:end_index,0]-raw_meas_record[start_index,0]
-        self.__time_sampling = np.int(np.ceil(raw_time[-1]*1000/raw_time.shape[0]))#in milliseconds
+        self.__time_sampling = int(np.ceil(raw_time[-1]*1000/raw_time.shape[0]))#in milliseconds
         self.__time = raw_meas_record[start_index:end_index,0] #np.arange(raw_time.shape[0])*self.__time_sampling
         self.__meas_record = raw_meas_record[start_index:end_index,1:]
         
