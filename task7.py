@@ -17,7 +17,7 @@ imu_df.columns = [
 # Preprocess IMU data
 skip_measurements = 1000
 imu_df = imu_df[skip_measurements:]  # Remove first 1000 samples
-imu_df['timestamp_s'] = imu_df['timestamp_ms']  # Convert to seconds
+imu_df['timestamp_s'] = imu_df['timestamp_ms'] # Convert to seconds
 imu_df['ax_m_s2'] = imu_df['ax_g'] * 9.8
 imu_df['ay_m_s2'] = imu_df['ay_g'] * 9.8
 imu_df['gz_rad_s'] = np.deg2rad(imu_df['gz_deg_s'])
@@ -55,15 +55,14 @@ gz_interpolator = interp1d(imu_time, imu_df['gz_rad_s'].values, kind='linear', f
 
 # Prepare to store synchronized measurements
 num_steps = int((end_time - start_time) / 0.1) + 1  # Number of steps based on 10ms intervals
-camera_measurements = [None] * num_steps
+camera_measurements = [[] for _ in range(num_steps)]  # List of lists to hold multiple measurements
 
 # Align Camera Data
 time_stamps = np.arange(start_time, end_time, 0.1)  # 10ms time step
-time_threshold = 0.1  # Allowable time difference in seconds
 
 for idx, row in camera_df.iterrows():
     camera_time = row['timestamp_s']
-    
+
     # Interpolate IMU data at the camera timestamp
     ax_value = ax_interpolator(camera_time)
     gz_value = gz_interpolator(camera_time)
@@ -73,8 +72,6 @@ for idx, row in camera_df.iterrows():
         z_k = np.array([row['distance_m'], np.deg2rad(row['attitude_deg'])])
         index = int((camera_time - start_time) / 0.1)
         if 0 <= index < len(camera_measurements):
-            if camera_measurements[index] is None:
-                camera_measurements[index] = []
             camera_measurements[index].append({'qr_id': qr_id, 'z_k': z_k})
 
 # 5. Define EKF Functions
@@ -128,9 +125,10 @@ def measurement_jacobian(x, qr_position):
 initial_X = 62.7 / 100.0
 initial_Y = 16.0 / 100.0
 x_est = np.array([initial_X, initial_Y, 0.0, 0.0, 0.0])
-P_est = np.diag([1.0, 1.0, np.radians(10), 1.0, np.radians(5)])**2
-Q = np.diag([0.1, 0.1, np.radians(1), 0.1, np.radians(0.5)])**2
-R = np.diag([0.5, np.radians(5)])**2
+P_est = np.diag([1.0, 1.0, np.radians(5), 1.0, np.radians(5)])**2
+
+Q = np.diag([0.3, 0.1, np.radians(1), 0.5, np.radians(0.2)])**2
+R = np.diag([0.1, np.radians(5)])**2
 
 # 7. Run the EKF
 x_estimates = np.zeros((num_steps, 5))
@@ -147,11 +145,8 @@ for k in range(1, num_steps):
     F_k = process_model_jacobian(x_est, u_k, dt_k)
     P_pred = F_k @ P_est @ F_k.T + Q
 
-    # Debugging: Log predicted state and covariance
-    #print(f"Step {k}: Predicted State: {x_pred}, Predicted Covariance: {P_pred}")
-
     # Update Step
-    if camera_measurements[k] is not None:
+    if camera_measurements[k]:
         for meas in camera_measurements[k]:
             qr_id = meas['qr_id']
             z_k = meas['z_k']
@@ -164,9 +159,6 @@ for k in range(1, num_steps):
             K_k = P_pred @ H_k.T @ np.linalg.inv(S_k)
             x_pred = x_pred + K_k @ y_k
             P_pred = (np.eye(5) - K_k @ H_k) @ P_pred
-            
-            # Debugging: Log measurement update
-            #print(f"Measurement Update: QR ID: {qr_id}, z_k: {z_k}, z_hat: {z_hat}, y_k: {y_k}, K_k: {K_k}")
 
     # Update estimates
     x_est = x_pred

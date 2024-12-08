@@ -22,7 +22,7 @@ imu_df = pd.read_csv(imu_data_file, header=None, names=columns)
 imu_times = imu_df['timestamp_ms'].values    # Timestamps in milliseconds
 gyro_data_deg = imu_df['gz_deg_s'].values           # Gyroscope z-axis data in degrees/sec
 
-start_index = 1000
+start_index = 100
 gyro_bias = np.mean(gyro_data_deg[:start_index])
 gyro_data_deg_corrected = gyro_data_deg - gyro_bias
 
